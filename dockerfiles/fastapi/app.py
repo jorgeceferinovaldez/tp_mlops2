@@ -1,8 +1,3 @@
-import json
-import pickle
-import boto3
-import mlflow
-
 import numpy as np
 import pandas as pd
 
@@ -12,90 +7,8 @@ from fastapi.responses import JSONResponse
 from fastapi.encoders import jsonable_encoder
 from pydantic import BaseModel, Field
 from typing_extensions import Annotated
-
-
-def load_model(model_name: str, alias: str):
-    """
-    Load a trained model and associated data dictionary.
-
-    This function attempts to load a trained model specified by its name and alias. If the model is not found in the
-    MLflow registry, it loads the default model from a file. Additionally, it loads information about the ETL pipeline
-    from an S3 bucket. If the data dictionary is not found in the S3 bucket, it loads it from a local file.
-
-    :param model_name: The name of the model.
-    :param alias: The alias of the model version.
-    :return: A tuple containing the loaded model, its version, and the data dictionary.
-    """
-
-    try:
-        # Load the trained model from MLflow
-        mlflow.set_tracking_uri('http://mlflow:5000')
-        client_mlflow = mlflow.MlflowClient()
-
-        model_data_mlflow = client_mlflow.get_model_version_by_alias(model_name, alias)
-        model_ml = mlflow.sklearn.load_model(model_data_mlflow.source)
-        version_model_ml = int(model_data_mlflow.version)
-    except:
-        # If there is no registry in MLflow, open the default model
-        file_ml = open('/app/files/model.pkl', 'rb')
-        model_ml = pickle.load(file_ml)
-        file_ml.close()
-        version_model_ml = 0
-
-
-    try:
-        # Load information of the ETL pipeline from S3
-        s3 = boto3.client('s3')
-
-        s3.head_object(Bucket='data', Key='data_info/data_star.json')
-        result_s3 = s3.get_object(Bucket='data', Key='data_info/data_star.json')
-        text_s3 = result_s3["Body"].read().decode()
-        data_dictionary = json.loads(text_s3)
-
-        #data_dictionary["standard_scaler_mean"] = np.array(data_dictionary["standard_scaler_mean"])
-        #data_dictionary["standard_scaler_std"] = np.array(data_dictionary["standard_scaler_std"])
-    except:
-        # If data dictionary is not found in S3, load it from local file
-        file_s3 = open('/app/files/data_star.json', 'r')
-        data_dictionary = json.load(file_s3)
-        file_s3.close()
-
-    return model_ml, version_model_ml, data_dictionary
-
-
-def check_model():
-    """
-    Check for updates in the model and update if necessary.
-
-    The function checks the model registry to see if the version of the champion model has changed. If the version
-    has changed, it updates the model and the data dictionary accordingly.
-
-    :return: None
-    """
-
-    global model
-    global data_dict
-    global version_model
-
-    try:
-        model_name = "star_class_model_prod"
-        alias = "champion"
-
-        mlflow.set_tracking_uri('http://mlflow:5000')
-        client = mlflow.MlflowClient()
-
-        # Check in the model registry if the version of the champion has changed
-        new_model_data = client.get_model_version_by_alias(model_name, alias)
-        new_version_model = int(new_model_data.version)
-
-        # If the versions are not the same
-        if new_version_model != version_model:
-            # Load the new model and update version and data dictionary
-            model, version_model, data_dict = load_model(model_name, alias)
-
-    except:
-        # If an error occurs during the process, pass silently
-        pass
+from strawberry.fastapi import GraphQLRouter
+from model_manager import model, data_dict, check_model
 
 
 class ModelInput(BaseModel):
@@ -249,10 +162,54 @@ class ModelOutput(BaseModel):
 
 
 
-# Load the model before start
-model, version_model, data_dict = load_model("star_class_model_prod", "champion")
+# Model is loaded in model_manager module
 
-app = FastAPI()
+app = FastAPI(
+    title="Star Classification API",
+    description="Multi-protocol API for star classification supporting REST, GraphQL, gRPC and Streaming",
+    version="2.0.0"
+)
+
+# GraphQL router will be added in startup event to avoid circular import
+
+# Initialize services on startup
+@app.on_event("startup")
+async def startup_event():
+    """Initialize additional services on startup"""
+    # Add GraphQL router to avoid circular import
+    from graphql_schema import schema
+    graphql_app = GraphQLRouter(schema)
+    app.include_router(graphql_app, prefix="/graphql")
+    
+    from grpc_server import start_grpc_server_thread
+    from kafka_streaming import start_kafka_streaming
+    
+    # Start gRPC server in background thread
+    try:
+        start_grpc_server_thread()
+    except Exception as e:
+        print(f"Warning: gRPC server failed to start: {e}")
+    
+    # Start Kafka streaming service
+    try:
+        kafka_started = start_kafka_streaming()
+        if kafka_started:
+            print("Kafka streaming service started successfully")
+        else:
+            print("Warning: Kafka streaming service failed to start (broker might not be available)")
+    except Exception as e:
+        print(f"Warning: Kafka streaming failed to start: {e}")
+
+
+@app.on_event("shutdown")
+async def shutdown_event():
+    """Cleanup on shutdown"""
+    from kafka_streaming import stop_kafka_streaming
+    try:
+        stop_kafka_streaming()
+        print("Kafka streaming service stopped")
+    except Exception as e:
+        print(f"Error stopping Kafka streaming: {e}")
 
 
 @app.get("/")
@@ -262,7 +219,103 @@ async def read_root():
 
     This endpoint returns a JSON response with a welcome message to indicate that the API is running.
     """
-    return JSONResponse(content=jsonable_encoder({"message": "Welcome to the Star Classifier API"}))
+    return JSONResponse(content=jsonable_encoder({
+        "message": "Welcome to the Multi-Protocol Star Classifier API",
+        "version": "2.0.0",
+        "available_endpoints": {
+            "REST": "/predict/",
+            "GraphQL": "/graphql",
+            "gRPC": "port 50051",
+            "Kafka_Streaming": "topics: star_features_input, star_predictions_output",
+            "API_Docs": "/docs",
+            "Services_Info": "/services"
+        }
+    }))
+
+
+@app.get("/services")
+async def services_info():
+    """
+    Information about available services and their endpoints.
+    """
+    return JSONResponse(content=jsonable_encoder({
+        "services": {
+            "REST_API": {
+                "description": "Traditional REST API for star classification",
+                "endpoint": "POST /predict/",
+                "port": 8800,
+                "documentation": "/docs"
+            },
+            "GraphQL_API": {
+                "description": "GraphQL API with flexible querying",
+                "endpoint": "/graphql",
+                "port": 8800,
+                "playground": "Available at /graphql for interactive queries",
+                "example_query": """
+                mutation {
+                  predict(features: {
+                    objID: 123456789.0,
+                    alpha: 180.0,
+                    delta: 45.0,
+                    u: 22.4, g: 21.6, r: 21.1,
+                    i: 20.9, z: 20.7,
+                    runID: 756, camCol: 3,
+                    fieldID: 674,
+                    specObjID: 567890123.0,
+                    redshift: 0.123,
+                    plate: 2345, MJD: 58583,
+                    fiberID: 456
+                  }) {
+                    intOutput
+                    strOutput
+                  }
+                }
+                """
+            },
+            "gRPC_Service": {
+                "description": "High-performance gRPC service with streaming support",
+                "port": 50051,
+                "proto_file": "proto/star_classification.proto",
+                "methods": ["Predict", "HealthCheck", "PredictStream"]
+            },
+            "Kafka_Streaming": {
+                "description": "Real-time streaming predictions via Apache Kafka",
+                "input_topic": "star_features_input",
+                "output_topic": "star_predictions_output",
+                "test_endpoint": "POST /stream/test"
+            }
+        }
+    }))
+
+
+@app.post("/stream/test")
+async def test_streaming(features: ModelInput):
+    """
+    Test the Kafka streaming functionality by sending data to the input topic.
+    """
+    from kafka_streaming import send_test_prediction
+    
+    # Convert features to dictionary
+    features_dict = features.dict()
+    
+    # Send to Kafka
+    success = send_test_prediction(features_dict)
+    
+    if success:
+        return JSONResponse(content=jsonable_encoder({
+            "message": "Test data sent to Kafka streaming service",
+            "input_topic": "star_features_input",
+            "output_topic": "star_predictions_output",
+            "note": "Check the output topic for prediction results"
+        }))
+    else:
+        return JSONResponse(
+            status_code=503,
+            content=jsonable_encoder({
+                "error": "Kafka streaming service not available",
+                "message": "Make sure Kafka broker is running and accessible"
+            })
+        )
 
 
 @app.post("/predict/", response_model=ModelOutput)
@@ -304,5 +357,5 @@ def predict(
     background_tasks.add_task(check_model)
 
     # Return the prediction result
-    return ModelOutput(int_output=bool(prediction[0].item()), str_output=str_pred)
+    return ModelOutput(int_output=int(prediction[0]), str_output=str_pred)
 

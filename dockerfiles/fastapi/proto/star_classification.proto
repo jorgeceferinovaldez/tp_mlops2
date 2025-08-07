@@ -1,0 +1,40 @@
+syntax = "proto3";
+
+package star_classification;
+
+message StarFeatures {
+  double obj_ID = 1;
+  double alpha = 2;
+  double delta = 3;
+  double u = 4;
+  double g = 5;
+  double r = 6;
+  double i = 7;
+  double z = 8;
+  int32 run_ID = 9;
+  int32 cam_col = 10;
+  int32 field_ID = 11;
+  double spec_obj_ID = 12;
+  double redshift = 13;
+  int32 plate = 14;
+  int32 MJD = 15;
+  int32 fiber_ID = 16;
+}
+
+message StarPrediction {
+  int32 int_output = 1;
+  string str_output = 2;
+}
+
+message HealthCheckRequest {}
+
+message HealthCheckResponse {
+  string status = 1;
+  string message = 2;
+}
+
+service StarClassificationService {
+  rpc Predict (StarFeatures) returns (StarPrediction);
+  rpc HealthCheck (HealthCheckRequest) returns (HealthCheckResponse);
+  rpc PredictStream (stream StarFeatures) returns (stream StarPrediction);
+}

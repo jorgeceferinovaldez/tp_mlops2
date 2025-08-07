@@ -156,3 +156,66 @@ cython_debug/
 #  and can be added to the global gitignore or merged into this file.  For a more nuclear
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
 #.idea/
+
+# gRPC generated files (should be generated from .proto files)
+*_pb2.py
+*_pb2_grpc.py
+
+# Test files created during development
+test_all_services.py
+
+# MLflow artifacts and runs
+mlruns/
+mlartifacts/
+.mlflow/
+
+# Docker volumes and data
+volumes/
+data/
+
+# Jupyter notebook checkpoints and outputs
+.ipynb_checkpoints/
+*.ipynb_checkpoints/
+
+# Model artifacts (if auto-generated)
+# Note: Keep model.pkl if it's the production model
+# models/
+# *.pkl
+# *.joblib
+# *.h5
+# *.onnx
+
+# Airflow generated files (logs are already there)
+# airflow/logs/ is already ignored
+airflow/plugins/__pycache__/
+
+# Operating system files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Editor temp files
+*.swp
+*.swo
+*~
+*.bak
+*.tmp
+
+# Environment variables and secrets
+.env.local
+.env.production
+.env.*.local
+
+# Coverage and testing
+.coverage.*
+.pytest_cache/
+htmlcov/
+.tox/
+
+# Kafka data (if persisted locally)
+kafka-logs/
+zookeeper-data/

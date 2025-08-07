@@ -76,8 +76,8 @@ services:
       - frontend
       - backend
     environment:
-      - MINIO_ACCESS_KEY=${MINIO_ACCESS_KEY:-minio}
-      - MINIO_SECRET_KEY=${MINIO_SECRET_ACCESS_KEY:-minio123}
+      - MINIO_ROOT_USER=${MINIO_ACCESS_KEY:-minio}
+      - MINIO_ROOT_PASSWORD=${MINIO_SECRET_ACCESS_KEY:-minio123}
     volumes:
       - minio_data:/data
     command: server /data --console-address :9001
@@ -101,11 +101,11 @@ services:
     entrypoint: >
       /bin/sh -c '
       sleep 5;
-      /usr/bin/mc config host add s3 http://s3:9000 ${MINIO_ACCESS_KEY:-minio} ${MINIO_SECRET_ACCESS_KEY:-minio123} --api S3v4;
-      [[ ! -z "`/usr/bin/mc ls s3 | grep challenge`" ]] || /usr/bin/mc mb s3/${MLFLOW_BUCKET_NAME:-mlflow};
-      /usr/bin/mc policy download s3/${MLFLOW_BUCKET_NAME:-mlflow};
-      [[ ! -z "`/usr/bin/mc ls s3 | grep challenge`" ]] || /usr/bin/mc mb s3/${DATA_REPO_BUCKET_NAME:-data};
-      /usr/bin/mc policy download s3/${DATA_REPO_BUCKET_NAME:-data};
+      /usr/bin/mc alias set s3 http://s3:9000 ${MINIO_ACCESS_KEY:-minio} ${MINIO_SECRET_ACCESS_KEY:-minio123} --api S3v4;
+      /usr/bin/mc ls s3/${MLFLOW_BUCKET_NAME:-mlflow} > /dev/null 2>&1 || /usr/bin/mc mb s3/${MLFLOW_BUCKET_NAME:-mlflow};
+      /usr/bin/mc anonymous set download s3/${MLFLOW_BUCKET_NAME:-mlflow};
+      /usr/bin/mc ls s3/${DATA_REPO_BUCKET_NAME:-data} > /dev/null 2>&1 || /usr/bin/mc mb s3/${DATA_REPO_BUCKET_NAME:-data};
+      /usr/bin/mc anonymous set download s3/${DATA_REPO_BUCKET_NAME:-data};
       exit 0;
       '
 
@@ -154,6 +154,7 @@ services:
         condition: service_healthy
     ports:
       - "${FASTAPI_PORT:-8800}:8800"
+      - "50051:50051"  # gRPC port
     networks:
       - frontend
       - backend
@@ -162,6 +163,7 @@ services:
       - AWS_SECRET_ACCESS_KEY=${MINIO_SECRET_ACCESS_KEY:-minio123}
       - MLFLOW_S3_ENDPOINT_URL=http://s3:9000
       - AWS_ENDPOINT_URL_S3=http://s3:9000
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
     command: >
       uvicorn app:app 
       --host 0.0.0.0
@@ -172,6 +174,51 @@ services:
       timeout: 10s
       start_period: 120s
       retries: 3
+
+  # Kafka Services for Streaming
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.0.1
+    hostname: zookeeper
+    container_name: zookeeper
+    profiles:
+      - streaming
+      - all
+    ports:
+      - "2181:2181"
+    networks:
+      - backend
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+
+  kafka:
+    image: confluentinc/cp-kafka:7.0.1
+    hostname: kafka
+    container_name: kafka
+    profiles:
+      - streaming
+      - all
+    depends_on:
+      - zookeeper
+    ports:
+      - "9092:9092"
+      - "9094:9094"
+    networks:
+      - frontend
+      - backend
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: 'zookeeper:2181'
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:9094
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    healthcheck:
+      test: kafka-broker-api-versions --bootstrap-server localhost:9092
+      interval: 60s
+      timeout: 10s
+      start_period: 60s
+      retries: 5
 
   airflow-webserver:
     <<: *airflow-common
