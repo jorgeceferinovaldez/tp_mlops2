@@ -350,6 +350,31 @@ services:
     volumes:
       - ${AIRFLOW_PROJ_DIR:-./airflow}:/sources
 
+prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    ports:
+      - '9090:9090'
+    restart: unless-stopped
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus-data:/prometheus
+    command:
+      - '--web.enable-lifecycle'
+      - '--config.file=/etc/prometheus/prometheus.yml'
+
+grafana:
+  image: grafana/grafana:latest
+  container_name: grafana
+  ports:
+    - '3000:3000'
+  restart: unless-stopped
+  volumes:
+    - grafana-data:/var/lib/grafana
+
+
+
+
 networks:
   frontend:
     driver: bridge
