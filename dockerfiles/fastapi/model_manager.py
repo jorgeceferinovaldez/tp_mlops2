@@ -3,7 +3,7 @@ import pickle
 import boto3
 import mlflow
 import numpy as np
-
+import os
 def load_model(model_name: str, alias: str):
     """
     Load a trained model and associated data dictionary.
@@ -19,7 +19,7 @@ def load_model(model_name: str, alias: str):
 
     try:
         # Load the trained model from MLflow
-        mlflow.set_tracking_uri('http://mlflow:5000')
+        mlflow.set_tracking_uri(os.environ.get('MLFLOW_TRACKING_URI', f'http://mlflow:{os.environ.get("MLFLOW_PORT", "5000")}'))
         client_mlflow = mlflow.MlflowClient()
 
         model_data_mlflow = client_mlflow.get_model_version_by_alias(model_name, alias)
