@@ -212,7 +212,7 @@ print(f"Health: {health_response.status}")
 def stream_predictions():
     # Create multiple requests
     requests = [request] * 5  # Send same request 5 times
-    
+
     # Stream predictions
     for response in stub.PredictStream(iter(requests)):
         print(f"Streamed prediction: {response.int_output} ({response.str_output})")
@@ -328,6 +328,7 @@ curl http://localhost:8800/services
 - Ensure port 50051 is not blocked
 - Regenerate proto files if needed:
   ```bash
+  cd dockerfiles/fastapi
   python -m grpc_tools.protoc -I./proto --python_out=. --grpc_python_out=. ./proto/star_classification.proto
   ```
 

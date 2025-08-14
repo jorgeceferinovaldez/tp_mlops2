@@ -5,7 +5,7 @@ from airflow.decorators import dag, task
 markdown_text = """
 ### Re-Train the Model for for Stellar Classification Data
 
-This DAG re-trains the model based on new data, tests the previous model, and put in production the new one 
+This DAG re-trains the model based on new data, tests the previous model, and put in production the new one
 if it performs  better than the old one. It uses the F1 score to evaluate the model with the test data.
 
 """
@@ -145,7 +145,7 @@ def processing_dag():
 
 
     @task.virtualenv(
-        task_id="retrain_stellar_model",
+        task_id="evaluate_champion_challenge",
         requirements=["scikit-learn==1.3.2",
                       "mlflow==2.10.2",
                       "awswrangler==3.6.0"],

@@ -79,13 +79,13 @@ obtain_original_data → preprocess_data → split_dataset → standardize_data
 ```
 
 1. **`obtain_original_data`**: Descarga el dataset desde Google Drive
-2. **`preprocess_data`**: 
+2. **`preprocess_data`**:
    - Codifica variables categóricas con LabelEncoder
    - Elimina la columna `rerun_ID`
    - Guarda metadatos en `data_star.json`
    - Registra el dataset en MLflow
 3. **`split_dataset`**: Divide en train/test (70/30) con estratificación
-4. **`standardize_data`**: 
+4. **`standardize_data`**:
    - Normaliza los datos usando StandardScaler
    - Guarda parámetros del scaler
    - Registra métricas en MLflow
@@ -136,7 +136,7 @@ La notebook realiza:
 
 ### Modelo y Parámetros Utilizados
 
-- **Random Forest**: 
+- **Random Forest**:
   - `n_estimators`: 200 (número de árboles en el bosque)
   - `max_depth`: 25 (profundidad máxima de cada árbol)
   - Criterio: Gini (por defecto para clasificación)
@@ -209,7 +209,7 @@ docker exec -it minio mc ls s3/data/final/test/
 # Ver logs del DAG de ETL
 docker compose logs airflow_scheduler | grep process_etl_stellar_data
 
-# Ver logs del DAG de reentrenamiento  
+# Ver logs del DAG de reentrenamiento
 docker compose logs airflow_scheduler | grep retrain_the_model
 ```
 
@@ -262,6 +262,9 @@ docker exec -it minio mc rm --recursive s3/mlflow/
 # Reiniciar servicios
 docker compose down
 docker compose --profile all up -d
+
+# Eliminar las imágenes y los volúmenes
+docker compose down --rmi all --volumes
 ```
 
 ---
