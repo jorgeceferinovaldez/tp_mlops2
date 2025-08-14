@@ -13,7 +13,7 @@ import Timeline from "./components/Timeline";
 import ServiceInfo from "./components/ServiceInfo";
 import { DEFAULT_SAMPLE, API_BASE } from "./constants";
 import type { HistoryItem, Mode, ModelInput, Prediction } from "./types";
-import { gqlPredict, kafkaTest, restPredict, servicesInfo } from "./lib/api";
+import { gqlPredict, kafkaTest, restPredict, servicesInfo } from "./api/api";
 
 export default function App() {
   const [form, setForm] = useState<ModelInput>(DEFAULT_SAMPLE);
