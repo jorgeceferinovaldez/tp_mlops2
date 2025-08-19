@@ -155,7 +155,7 @@ docker compose --profile airflow up -d
 | **🏗️ Apache Airflow** | http://localhost:8080 | Gestión de flujos de trabajo |
 | **🔬 MLflow** | http://localhost:5000 | Gestión del ciclo de vida ML |
 | **💾 MinIO** | http://localhost:9001 | Almacenamiento de objetos S3 |
-| **🚀 Frontend en React**| http://localhost:5174 | Interfaz futurista para clasificación de galaxias servido en Vite |
+| **🚀 Frontend en React**| http://localhost:5174 | Interfaz para clasificación de galaxias servido en Vite |
 
 
 ### 4. Puertos Expuestos
@@ -172,7 +172,7 @@ docker compose --profile airflow up -d
 ---
 ## Levantar el frontend localmente (developer mode)
 
-Para correr la interfaz futurista de clasificación de galaxias en modo desarrollo:
+Para correr la interfaz de clasificación de galaxias en modo desarrollo:
 
 ```bash
 # 1. Moverse a la carpeta del frontend
