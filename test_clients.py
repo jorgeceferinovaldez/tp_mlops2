@@ -8,6 +8,8 @@ Test clients for all star classification API services:
 This script demonstrates how to interact with each service and provides 
 performance comparison capabilities.
 """
+import sys
+import os
 
 import grpc
 import json
@@ -19,6 +21,8 @@ from typing import Dict, Any
 import threading
 import queue
 
+# Agregamos la ruta al PYTHONPATH para que lea los archivos proto
+sys.path.append(os.path.join(os.path.dirname(__file__), 'dockerfiles/fastapi'))
 
 # Sample star data for testing
 SAMPLE_STAR_DATA = {

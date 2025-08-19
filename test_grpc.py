@@ -1,9 +1,18 @@
+import sys
+import os
+
+# Agregamos la ruta al PYTHONPATH para que lea los archivos proto
+sys.path.append(os.path.join(os.path.dirname(__file__), 'dockerfiles/fastapi'))
+
+
 import grpc
 import star_classification_pb2
 import star_classification_pb2_grpc
 
 channel = grpc.insecure_channel("localhost:50051")
-stub = star_classification_pb2_grpc.StarClassificationStub(channel)
+#stub = star_classification_pb2_grpc.StarClassificationStub(channel)
+stub = star_classification_pb2_grpc.StarClassificationServiceStub(channel)
+
 
 features = star_classification_pb2.StarFeatures(
     obj_ID=123456789.0,
