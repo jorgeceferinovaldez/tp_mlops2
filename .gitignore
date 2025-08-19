@@ -219,3 +219,4 @@ htmlcov/
 # Kafka data (if persisted locally)
 kafka-logs/
 zookeeper-data/
+.env

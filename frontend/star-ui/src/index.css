@@ -1,9 +1,0 @@
-/* Reset básico y fondo oscuro acorde al diseño */
-:root { color-scheme: dark; }
-html, body, #root { height: 100%; }
-body {
-  color: white;
-  margin: 0;
-  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
-  background: #0b1020;
-}

@@ -1,0 +1,45 @@
+/* Reset básico y fondo oscuro acorde al diseño */
+:root { color-scheme: dark; }
+html, body, #root { height: 100%; }
+body {
+  color: white;
+  margin: 0;
+  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  background: #0b1020;
+}
+
+.michroma-regular {
+  font-family: "Michroma", sans-serif;
+  font-weight: 400;
+  font-style: normal;
+}
+
+.sparkle {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  background-color: #00f0ff;
+  border-radius: 50%;
+  box-shadow: 0 0 8px #00f0ff, 0 0 12px #00f0ff;
+  opacity: 0;
+  animation: sparkle-fade 5s ease-in-out;
+}
+
+@keyframes sparkle-fade {
+  0% {
+    opacity: 0;
+    transform: scale(0.3);
+  }
+  30% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  70% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(0.2);
+  }
+}

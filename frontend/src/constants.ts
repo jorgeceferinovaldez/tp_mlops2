@@ -1,14 +1,14 @@
-import { blue, deepPurple, orange } from "@mui/material/colors";
 import type { ModelInput } from "./types";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const API_BASE = (import.meta as any).env?.VITE_API_BASE || "";
 
 export const CLASS_COLORS: Record<string, string> = {
-  Galaxy: deepPurple[300],
-  OSO: blue[300],
-  Star: orange[400],
+  Galaxy: "#38bdf8",   // Sky Blue
+  Star: "#f472b6",     // Pink
+  OSO: "#c084fc",      // Purple
 };
+
 
 export const DEFAULT_SAMPLE: ModelInput = {
   obj_ID: 123456789.0,

@@ -41,3 +41,41 @@
 .read-the-docs {
   color: #888;
 }
+
+.starfield-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 100;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.starfield-overlay .sparkle {
+  position: absolute;
+  width: 2px;
+  z-index: 10;
+  height: 2px;
+  background: white;
+  border-radius: 50%;
+  opacity: 0.6;
+  animation: sparkle 4s ease-in-out forwards;
+  filter: drop-shadow(0 0 4px #00ffff);
+}
+
+@keyframes sparkle {
+  0% {
+    opacity: 0;
+    transform: scale(0.2);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(0.2);
+  }
+}

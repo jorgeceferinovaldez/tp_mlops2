@@ -1,5 +1,5 @@
 x-airflow-common: &airflow-common
-  build: './dockerfiles/airflow'
+  build: './airflow'
   image: ${AIRFLOW_IMAGE_NAME:-extending_airflow:latest}
   profiles:
     - airflow
@@ -37,7 +37,7 @@ x-airflow-common: &airflow-common
 services:
   postgres:
     restart: always
-    build: './dockerfiles/postgres'
+    build: './postgres'
     image: postgres_system
     container_name: postgres
     profiles:
@@ -111,7 +111,7 @@ services:
 
   mlflow:
     restart: always
-    build: "./dockerfiles/mlflow"
+    build: "./mlflow"
     image: mlflow
     container_name: mlflow
     profiles:
@@ -142,7 +142,7 @@ services:
 
   fastapi:
     restart: always
-    build: "./dockerfiles/fastapi"
+    build: "./fastapi"
     image: backend_fastapi
     container_name: fastapi
     profiles:
@@ -350,6 +350,21 @@ services:
     volumes:
       - ${AIRFLOW_PROJ_DIR:-./airflow}:/sources
 
+  frontend:
+    build:
+      context: ./frontend
+      target: dev
+    ports:
+      - "5174:5174"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    env_file:
+      - ./frontend/.env
+    profiles: ["all"]
+    depends_on:
+      - fastapi
+
 networks:
   frontend:
     driver: bridge
@@ -359,3 +374,4 @@ networks:
 volumes:
   db_data:
   minio_data:
+
