@@ -10,7 +10,7 @@ x-airflow-common: &airflow-common
     AIRFLOW__CORE__SQL_ALCHEMY_CONN: postgresql+psycopg2://${PG_USER:-airflow}:${PG_PASSWORD:-airflow}@postgres/${PG_DATABASE:-airflow}
     AIRFLOW__CORE__FERNET_KEY: ''
     AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: 'true'
-    AIRFLOW__CORE__LOAD_EXAMPLES: 'false'  # Change to 'false' to remove the tutorials and examples
+    AIRFLOW__CORE__LOAD_EXAMPLES: 'false' # Change to 'false' to remove the tutorials and examples
     AIRFLOW__API__AUTH_BACKENDS: 'airflow.api.auth.backend.session'
     AIRFLOW__CORE__TEST_CONNECTION: 'Enabled'
     AIRFLOW__WEBSERVER__EXPOSE_CONFIG: 'True'
@@ -30,7 +30,7 @@ x-airflow-common: &airflow-common
     - frontend
     - backend
   user: "${AIRFLOW_UID:-50000}:${AIRFLOW_GID:-0}"
-  depends_on:  &airflow-common-depends-on
+  depends_on: &airflow-common-depends-on
     postgres:
       condition: service_healthy
 
@@ -56,7 +56,7 @@ services:
     volumes:
       - db_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD", "pg_isready", "-p", "5432", "-U", "${PG_USER:-airflow}"]
+      test: [ "CMD", "pg_isready", "-p", "5432", "-U", "${PG_USER:-airflow}" ]
       interval: 60s
       timeout: 20s
       retries: 3
@@ -82,7 +82,7 @@ services:
       - minio_data:/data
     command: server /data --console-address :9001
     healthcheck:
-      test: ["CMD", "mc", "ready", "local"]
+      test: [ "CMD", "mc", "ready", "local" ]
       interval: 60s
       timeout: 20s
       retries: 3
@@ -99,15 +99,7 @@ services:
     networks:
       - backend
     entrypoint: >
-      /bin/sh -c '
-      sleep 5;
-      /usr/bin/mc alias set s3 http://s3:9000 ${MINIO_ACCESS_KEY:-minio} ${MINIO_SECRET_ACCESS_KEY:-minio123} --api S3v4;
-      /usr/bin/mc ls s3/${MLFLOW_BUCKET_NAME:-mlflow} > /dev/null 2>&1 || /usr/bin/mc mb s3/${MLFLOW_BUCKET_NAME:-mlflow};
-      /usr/bin/mc anonymous set download s3/${MLFLOW_BUCKET_NAME:-mlflow};
-      /usr/bin/mc ls s3/${DATA_REPO_BUCKET_NAME:-data} > /dev/null 2>&1 || /usr/bin/mc mb s3/${DATA_REPO_BUCKET_NAME:-data};
-      /usr/bin/mc anonymous set download s3/${DATA_REPO_BUCKET_NAME:-data};
-      exit 0;
-      '
+      /bin/sh -c ' sleep 5; /usr/bin/mc alias set s3 http://s3:9000 ${MINIO_ACCESS_KEY:-minio} ${MINIO_SECRET_ACCESS_KEY:-minio123} --api S3v4; /usr/bin/mc ls s3/${MLFLOW_BUCKET_NAME:-mlflow} > /dev/null 2>&1 || /usr/bin/mc mb s3/${MLFLOW_BUCKET_NAME:-mlflow}; /usr/bin/mc anonymous set download s3/${MLFLOW_BUCKET_NAME:-mlflow}; /usr/bin/mc ls s3/${DATA_REPO_BUCKET_NAME:-data} > /dev/null 2>&1 || /usr/bin/mc mb s3/${DATA_REPO_BUCKET_NAME:-data}; /usr/bin/mc anonymous set download s3/${DATA_REPO_BUCKET_NAME:-data}; exit 0; '
 
   mlflow:
     restart: always
@@ -130,10 +122,7 @@ services:
       - AWS_SECRET_ACCESS_KEY=${MINIO_SECRET_ACCESS_KEY:-minio123}
       - MLFLOW_S3_ENDPOINT_URL=http://s3:9000
     command: >
-      mlflow server 
-      --backend-store-uri postgresql://${PG_USER:-airflow}:${PG_PASSWORD:-airflow}@postgres:5432/${MLFLOW_DB:-mlflow_db}
-      --host 0.0.0.0
-      --default-artifact-root s3://${MLFLOW_BUCKET_NAME:-mlflow}/
+      mlflow server  --backend-store-uri postgresql://${PG_USER:-airflow}:${PG_PASSWORD:-airflow}@postgres:5432/${MLFLOW_DB:-mlflow_db} --host 0.0.0.0 --default-artifact-root s3://${MLFLOW_BUCKET_NAME:-mlflow}/
     healthcheck:
       test: wget --no-verbose --tries=1 --spider http://mlflow:5000 || exit 1
       interval: 60s
@@ -154,7 +143,7 @@ services:
         condition: service_healthy
     ports:
       - "${FASTAPI_PORT:-8800}:8800"
-      - "50051:50051"  # gRPC port
+      - "50051:50051" # gRPC port
     networks:
       - frontend
       - backend
@@ -165,9 +154,7 @@ services:
       - AWS_ENDPOINT_URL_S3=http://s3:9000
       - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
     command: >
-      uvicorn app:app 
-      --host 0.0.0.0
-      --port 8800
+      uvicorn app:app  --host 0.0.0.0 --port 8800
     healthcheck:
       test: curl --include --request GET http://fastapi:8800/ || exit 1
       interval: 60s
@@ -177,7 +164,7 @@ services:
 
   # Kafka Services for Streaming
   zookeeper:
-    platform: linux/amd64  # Agregar esta línea
+    platform: linux/amd64 # Agregar esta línea
     image: confluentinc/cp-zookeeper:7.0.1
     hostname: zookeeper
     container_name: zookeeper
@@ -193,7 +180,7 @@ services:
       ZOOKEEPER_TICK_TIME: 2000
 
   kafka:
-    platform: linux/amd64  # Agregar esta línea
+    platform: linux/amd64 # Agregar esta línea
     image: confluentinc/cp-kafka:7.0.1
     hostname: kafka
     container_name: kafka
@@ -349,38 +336,126 @@ services:
     user: "0:0"
     volumes:
       - ${AIRFLOW_PROJ_DIR:-./airflow}:/sources
-
-prometheus:
-    image: prom/prometheus:latest
+  prometheus:
+    image: prom/prometheus:v2.54.1
     container_name: prometheus
+    restart: unless-stopped
     ports:
       - '9090:9090'
-    restart: unless-stopped
     volumes:
-      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./dockerfiles/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./dockerfiles/prometheus/rules/rules:/etc/prometheus/rules:ro
+      - ./dockerfiles/prometheus/alerts/alerts:/etc/prometheus/alerts:ro
       - prometheus-data:/prometheus
     command:
-      - '--web.enable-lifecycle'
       - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.retention.time=15d'
+      - '--storage.tsdb.retention.size=5GB'
+      - '--storage.tsdb.wal-compression'
 
-grafana:
-  image: grafana/grafana:latest
-  container_name: grafana
-  ports:
-    - '3000:3000'
-  restart: unless-stopped
-  volumes:
-    - grafana-data:/var/lib/grafana
+    networks:
+      - monitoring
+    depends_on:
+      - node-exporter
+      - blackbox-exporter
+    healthcheck:
+      test: [ "CMD", "wget", "--spider", "http://localhost:9090/-/healthy" ]
+      interval: 30s
+      timeout: 5s
+      retries: 3
 
+  node-exporter:
+    image: quay.io/prometheus/node-exporter:v1.8.2
+    container_name: node-exporter
+    restart: unless-stopped
+    ports:
+      - "9100:9100"
+    command:
+      - --path.rootfs=/host
+      - --path.procfs=/host/proc
+      - --path.sysfs=/host/sys
+      - --collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($|/)
+      - --collector.processes
+      - --collector.systemd
+      - --collector.textfile.directory=/var/lib/node_exporter/textfile_collector
+    volumes:
+      - '/:/host:ro'
+      - '/proc:/host/proc:ro'
+      - '/sys:/host/sys:ro'
+      - 'node-exporter-textfiles:/var/lib/node_exporter/textfile_collector'
+    networks:
+      - monitoring
 
+  blackbox-exporter:
+    image: prom/blackbox-exporter:v0.25.0
+    container_name: blackbox-exporter
+    restart: unless-stopped
+    ports:
+      - "9115:9115"
+    volumes:
+      - ./dockerfiles/prometheus/blackbox.yml:/etc/blackbox_exporter/config.yml:ro
+    command:
+      - '--config.file=/etc/blackbox_exporter/config.yml'
+    networks:
+      - monitoring
 
+  grafana:
+    image: grafana/grafana:11.1.0
+    container_name: grafana
+    restart: unless-stopped
+    ports:
+      - '3000:3000'
+    env_file:
+      - .env
+    environment:
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_SECURITY_DISABLE_GRAVATAR=true
+      - GF_ANALYTICS_REPORTING_ENABLED=false
+      - GF_ANALYTICS_CHECK_FOR_UPDATES=false
+      - GF_INSTALL_PLUGINS=grafana-piechart-panel,grafana-worldmap-panel
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./dockerfiles/prometheus/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./dockerfiles/prometheus/grafana/dashboards:/var/lib/grafana/dashboards:ro
+    networks:
+      - monitoring
+    depends_on:
+      - prometheus
+    healthcheck:
+      test: [ "CMD", "wget", "--spider", "http://localhost:3000/login" ]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  alertmanager:
+    image: prom/alertmanager:v0.27.0
+    container_name: alertmanager
+    restart: unless-stopped
+    ports:
+      - "9093:9093"
+    volumes:
+      - ./dockerfiles/prometheus/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
+      - alertmanager-data:/alertmanager
+    command:
+      - '--config.file=/etc/alertmanager/alertmanager.yml'
+      - '--storage.path=/alertmanager'
+      - '--web.external-url=http://localhost:9093'
+    networks:
+      - monitoring
 
 networks:
   frontend:
     driver: bridge
   backend:
     driver: bridge
+  monitoring:
+    driver: bridge
 
 volumes:
   db_data:
   minio_data:
+  prometheus-data:
+  grafana-data:
+  alertmanager-data:
+  node-exporter-textfiles:
