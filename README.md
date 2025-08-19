@@ -61,52 +61,74 @@ La API SCO-SDSS17 (Star Classification Objects SDSS) clasifica objetos celestes 
 
 ```
 tp-amq2-service-ml/
-├── airflow/                        # Apache Airflow DAGs y configuración
-│   ├── dags/
-│   │   ├── etl_process_grupal.py   # DAG principal de ETL
-│   │   └── retrain_the_model.py    # DAG de reentrenamiento
-│   └── secrets/                    # Configuración de conexiones y variables
+tp-amq2-service-ml/
+├── airflow/ # Apache Airflow DAGs y configuración
+│ ├── dags/
+│ │ ├── etl_process_grupal.py # DAG principal de ETL
+│ │ └── retrain_the_model.py # DAG de reentrenamiento
+│ └── secrets/ # Configuración de conexiones y variables
 │
-├── dockerfiles/                    # Dockerfiles para cada servicio
-│   ├── airflow/
-│   ├── fastapi/                    # Servicio principal multi-protocolo
-│   │   ├── app.py                  # FastAPI principal con GraphQL
-│   │   ├── graphql_schema.py       # Schema GraphQL para clasificación
-│   │   ├── grpc_server.py          # Servidor gRPC con streaming
-│   │   ├── kafka_streaming.py      # Consumidor/Productor Kafka
-│   │   ├── model_manager.py        # Gestión centralizada del modelo ML
-│   │   ├── proto/                  # Protocol Buffers definitions
-│   │   │   └── star_classification.proto
-│   │   ├── requirements.txt        # Dependencias multi-protocolo
-│   │   ├── Dockerfile              # Build con generación gRPC
-│   │   └── files/
-│   │       ├── model.pkl           # Modelo ML productivo
-│   │       └── data_star.json      # Metadatos del pipeline
-│   ├── mlflow/
-│   └── postgres/
+├── fastapi/ # Servicio principal multi-protocolo
+│ ├── app.py # FastAPI principal con GraphQL
+│ ├── graphql_schema.py # Schema GraphQL para clasificación
+│ ├── grpc_server.py # Servidor gRPC con streaming
+│ ├── kafka_streaming.py # Consumidor/Productor Kafka
+│ ├── model_manager.py # Gestión centralizada del modelo ML
+│ ├── proto/ # Protocol Buffers definitions
+│ │ └── star_classification.proto
+│ ├── requirements.txt # Dependencias multi-protocolo
+│ ├── Dockerfile # Build con generación gRPC
+│ └── files/
+│ ├── model.pkl # Modelo ML productivo
+│ └── data_star.json # Metadatos del pipeline
 │
-├── notebook_example/               # Notebooks experimentación
-│   ├── experiment_mlflow.py        # Experimentos MLflow + Optuna
-│   ├── mlflow_aux.py               # Utilidades MLflow
-│   └── plots.py                    # Visualizaciones
+├── frontend/ # Aplicación React con MUI y Vite
+│ ├── public/ # Archivos públicos (favicon, index.html)
+│ ├── src/ # Componentes y vistas
+│ │ ├── components/ # Componentes como InputForm, HistoryList, etc.
+│ │ ├── App.tsx # App principal
+│ │ ├── main.tsx # Punto de entrada
+│ │ ├── theme.ts # Tema MUI personalizado
+│ │ └── index.css # Estilos globales
+│ ├── package.json # Dependencias frontend
+│ └── vite.config.ts # Configuración Vite
 │
-├── resources/                      # Ejemplos de implementación
-│   ├── gRPC_GraphQL_REST.py        # Tutorial implementaciones
-│   └── data_streaming1_kafka.py    # Ejemplo Kafka streaming
+├── notebook_example/ # Notebooks experimentación
+│ ├── experiment_mlflow.py # Experimentos MLflow + Optuna
+│ ├── mlflow_aux.py # Utilidades MLflow
+│ └── plots.py # Visualizaciones
 │
-├── docker-compose.yaml             # Orquestación multi-servicio
-├── test_clients.py                 # Cliente de testing multi-protocolo
-├── API_USAGE_GUIDE.md              # Guía detallada de uso
+├── resources/ # Ejemplos de implementación
+│ ├── gRPC_GraphQL_REST.py # Tutorial implementaciones
+│ └── data_streaming1_kafka.py # Ejemplo Kafka streaming
+│
+├── docker-compose.yaml # Orquestación multi-servicio
+├── test_clients.py # Cliente de testing multi-protocolo
+├── API_USAGE_GUIDE.md # Guía detallada de uso
 └── README.md                       # Este archivo
 ```
 
 ---
 
 ## Instalación y Despliegue
+---
 
-### 1. Despliegue Completo (Todos los Servicios)
+## ⚙️ Configuración Inicial
+
+Antes de iniciar el proyecto, debés crear el archivo `.env` dentro de la carpeta `frontend/`, copiando el contenido desde `.env.example`:
+
 ```bash
-# Todos los servicios incluido Kafka streaming
+# root
+cp .env.example .env
+
+# frontend
+cd frontend
+cp .env.example .env
+```
+
+### 1. Despliegue Completo (Todos los Servicios incluyendo el frontend)
+```bash
+# Todos los servicios incluido Kafka streaming y el frontend
 docker compose --profile all up -d
 ```
 
@@ -133,6 +155,8 @@ docker compose --profile airflow up -d
 | **🏗️ Apache Airflow** | http://localhost:8080 | Gestión de flujos de trabajo |
 | **🔬 MLflow** | http://localhost:5000 | Gestión del ciclo de vida ML |
 | **💾 MinIO** | http://localhost:9001 | Almacenamiento de objetos S3 |
+| **🚀 Frontend en React**| http://localhost:5174 | Interfaz futurista para clasificación de galaxias servido en Vite |
+
 
 ### 4. Puertos Expuestos
 - **8800**: FastAPI (REST + GraphQL)
@@ -143,8 +167,23 @@ docker compose --profile airflow up -d
 - **5000**: MLflow Tracking Server
 - **8080**: Airflow Webserver
 - **9001**: MinIO Console
+- **5174**: Frontend servido en Vite
 
 ---
+## Levantar el frontend localmente (developer mode)
+
+Para correr la interfaz futurista de clasificación de galaxias en modo desarrollo:
+
+```bash
+# 1. Moverse a la carpeta del frontend
+cd frontend
+
+# 2. Instalar dependencias
+npm install
+
+# 3. Iniciar servidor de desarrollo
+npm run dev
+```
 
 ## Uso de la API
 
