@@ -126,13 +126,20 @@ cd frontend
 cp .env.example .env
 ```
 
-### 1. Despliegue Completo (Todos los Servicios incluyendo el frontend)
+### 1. Construir y despliegue completo (Todos los Servicios incluyendo el frontend)
+```bash
+# Todos los servicios incluido Kafka streaming y el frontend
+docker compose --profile all up -d --build
+```
+
+### 2. Si no se efectuaron cambios (Todos los Servicios incluyendo el frontend)
 ```bash
 # Todos los servicios incluido Kafka streaming y el frontend
 docker compose --profile all up -d
 ```
 
-### 2. Despliegue por Perfiles
+
+### 3. Despliegue por Perfiles
 ```bash
 # Solo servicios de ML (MLflow + API)
 docker compose --profile mlflow up -d
@@ -144,7 +151,7 @@ docker compose --profile streaming up -d
 docker compose --profile airflow up -d
 ```
 
-### 3. Verificación de Servicios
+### 4. Verificación de Servicios
 
 | Servicio | URL | Descripción |
 |----------|-----|-------------|
@@ -158,16 +165,27 @@ docker compose --profile airflow up -d
 | **🚀 Frontend en React**| http://localhost:5174 | Interfaz para clasificación de galaxias servido en Vite |
 
 
-### 4. Puertos Expuestos
+### 5. Puertos Expuestos
 - **8800**: FastAPI (REST + GraphQL)
 - **50051**: gRPC Service
 - **9092**: Kafka Broker (conexiones externas)
 - **9094**: Kafka Broker (conexiones internas)
 - **2181**: Zookeeper
-- **5000**: MLflow Tracking Server
+- **5001**: MLflow Tracking Server
 - **8080**: Airflow Webserver
 - **9001**: MinIO Console
 - **5174**: Frontend servido en Vite
+
+
+### 6. Detener (conserva contenedores y volúmenes)
+```bash
+docker compose --profile all down
+```
+
+### 7. Detener y eliminar volúmenes (limpieza completa)
+```bash
+docker compose --profile all down --volumes
+```
 
 ---
 ## Levantar el frontend localmente (developer mode)
