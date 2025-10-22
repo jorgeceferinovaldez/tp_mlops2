@@ -153,7 +153,7 @@ docker compose --profile airflow up -d
 | **🔍 Services Info** | http://localhost:8800/services | Información de todos los protocolos |
 | **⚡ GraphQL Playground** | http://localhost:8800/graphql | Interface GraphQL interactiva |
 | **🏗️ Apache Airflow** | http://localhost:8080 | Gestión de flujos de trabajo |
-| **🔬 MLflow** | http://localhost:5000 | Gestión del ciclo de vida ML |
+| **🔬 MLflow** | http://localhost:5001 | Gestión del ciclo de vida ML |
 | **💾 MinIO** | http://localhost:9001 | Almacenamiento de objetos S3 |
 | **🚀 Frontend en React**| http://localhost:5174 | Interfaz para clasificación de galaxias servido en Vite |
 

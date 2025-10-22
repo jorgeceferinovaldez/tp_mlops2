@@ -133,6 +133,7 @@ services:
       mlflow server 
       --backend-store-uri postgresql://${PG_USER:-airflow}:${PG_PASSWORD:-airflow}@postgres:5432/${MLFLOW_DB:-mlflow_db}
       --host 0.0.0.0
+      --allowed-hosts "*"
       --default-artifact-root s3://${MLFLOW_BUCKET_NAME:-mlflow}/
     healthcheck:
       test: wget --no-verbose --tries=1 --spider http://mlflow:5000 || exit 1
